@@ -23,7 +23,7 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
-#Problem 1
+# Problem 1
 
 ```{r P1}
 data("instacart")
@@ -81,7 +81,7 @@ instacart %>%
 	)
 ```
 
-#Problem 2
+# Problem 2
 ```{r P2_load_data, message=FALSE}
 accel_data = 
   read_csv("./data/accel_data.csv") %>%
@@ -112,5 +112,16 @@ accel_data %>%
 ```
 I can't see any apparent increasing or decreasing trend from this table. Looks like except for 3 days, all the other days have same order of magnitude of total activity count with fluctuation. We may need further analysis and visulization to find systematic trend.
 
-#Problem 3
+Describe in words any patterns or conclusions you can make based on this graph.
+```{r P2Q3}
+accel_data %>%
+  group_by(day_id) %>%
+  ggplot(aes(x = minute_of_day, y = activity_count, color = day)) + 
+    geom_point(alpha = .5) + geom_line(alpha = .5) + 
+    theme(legend.position = "bottom") +
+  labs(title = "activity over the course of the day")
+```
+
+There activity over the course of the day varies for different time in a day and different day in a week. From around 350 minutes, the person maintain a moderate activity count, compared to 270 minutes in weekdays, which might mean that he gets up earlier in weekdays than weekend. The peak of activity on weekend are between 600-750 minutes, around 1000 minutes and some 1200 minutes, while the major peak for weekdays are around 1250 minutes, some around 500 minutes, this may indicate that the person do exercises in different time of a day.
+
 
