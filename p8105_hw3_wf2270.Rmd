@@ -181,7 +181,7 @@ temp_hex <- noaa_data %>%
     geom_hex() + 
     theme(legend.position = "bottom",
           legend.key.height = unit(0.1, "in"),
-          legend.key.width = unit(0.5, "in")) +
+          legend.key.width = unit(0.4, "in")) +
     labs(title = "Heatmap of daily tmax vs. tmin",
          x = "tmin (°C)", 
          y = "tmax (°C)") 
@@ -194,7 +194,7 @@ snow_density <- noaa_data %>%
   labs(title = "Density plot of snowfall(mm)",
          x = "Snowfall (mm)", 
          y = "Density") + 
-  theme(legend.key.size = unit(0.07, "in"))
+  theme(legend.key.size = unit(0.05, "in"))
 
 final_plot <- temp_hex + snow_density 
 
