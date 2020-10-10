@@ -101,3 +101,16 @@ head(accel_data)
 ```
 
 Our final dataset includes `r nrow(accel_data)` observations with `r ncol(accel_data)` variables. Each observation has a "week" variable indicating which week, a unique"day_id" variable for each specific day, a "day" variable indicating the day of the week, a "minute_of_day" variable indicating which minute of the day is the record about, a "activity_court" recoding the activity counts for the minute, and a "weekend" indicating whether it's a weekend or a weekday.
+
+aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+
+```{r P2Q2}
+accel_data %>%
+  group_by(day_id) %>%
+  summarize(total_activity = sum(activity_count)) %>%
+  knitr::kable()
+```
+I can't see any apparent increasing or decreasing trend from this table. Looks like except for 3 days, all the other days have same order of magnitude of total activity count with fluctuation. We may need further analysis and visulization to find systematic trend.
+
+#Problem 3
+
