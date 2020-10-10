@@ -152,7 +152,7 @@ From the quantile, we can see that at least over 50% of snowfall data are 0, so 
 
 Let's see a two-panel plot showing the average max temperature in January and in July in each station across years.  Each point represents average tmax over the month in the year in specific station.
 
-```{r P3_plot1}
+```{r P3_plot1, message=F}
 noaa_data %>% 
   filter(month %in% c("January", "July")) %>% 
   group_by(year, month, id) %>% 
@@ -167,43 +167,40 @@ noaa_data %>%
        y = "Average Max Daily Temperature (°C)") 
 ```
 
-Is there any observable / interpretable structure? Any outliers?
-There's an continuous increase for the average max temperature in January, and it tends to center around zero degrees while the temperature for July varies around 27 degrees. In addition, the average maximum temperature for January appears to have more variation compared to that of July. Looks like there is one station has much lower average tmax(10 degress than the min of all the other station, and nearly 15 degrees from the center) in July 1988, we need to further check the data and other information to determine whether it's an outlier.
+There's an continuous increase for the average max temperature in January from 1980-1990, and then it tends to flutuate around zero degrees while the temperature for July varies around 27 degrees. In addition, the average maximum temperature for January appears to have more variation compared to that of July. Looks like there is one station has much lower average tmax(10 degress than the min of all the other station, and nearly 15 degrees from the center) in July 1988, we need to further check the data and other information to determine whether it's an outlier.
 
 Let's see a two-panel plot showing 
 (i) tmax vs tmin for the full dataset. For this plot, since there are too many data points, we use a heatmap.
 (ii) the distribution of snowfall values greater than 0 and less than 100 separately by year.
 
-```{r P3Q3}
-library(plotly)
+```{r P3Q3, message=F}
+library(plotly) #for hexbin()
+library(patchwork) #for wrap_elements()
 temp_hex <- noaa_data %>%
   ggplot(aes(x = tmin, y = tmax)) +
     geom_hex() + 
     theme(legend.position = "bottom",
           legend.key.height = unit(0.1, "in"),
-          legend.key.width = unit(0.5, "in"),
-          plot.title = element_text(size = 7)) +
-    labs(title = "Hexagon density plot of daily minimum and maximum temperature (°C)",
-         x = "Minimum Temperature (°C)", 
-         y = "Maximum Temperature (°C)") 
+          legend.key.width = unit(0.5, "in")) +
+    labs(title = "Heatmap of daily tmax vs. tmin",
+         x = "tmin (°C)", 
+         y = "tmax (°C)") 
 
-  
 snow_density <- noaa_data %>%
   filter(snow > 0 & snow < 100) %>%
   mutate(year = as.factor(year)) %>%
   ggplot(aes(x = snow, color = year)) +
   geom_density(alpha = 0.01) +
-  labs(title = "Density plot of snowfall (mm), 1981-2010",
+  labs(title = "Density plot of snowfall(mm)",
          x = "Snowfall (mm)", 
          y = "Density") + 
-  theme(legend.position = "bottom", 
-          legend.direction = "horizontal", 
-          legend.key.size = unit(0.1, "in"), 
-          legend.text = element_text(size = 6),
-          plot.title = element_text(size = 7))
+  theme(legend.key.size = unit(0.07, "in"))
 
-temp_snow_plot <- temp_hex + snow_density 
+final_plot <- temp_hex + snow_density 
 
-wrap_elements(snow_temp_plot) + ggtitle("Figure 5: Density and hexagon plots")
+wrap_elements(final_plot) + ggtitle("Figure 3: Heatmap and density plots")
 ```
 
+From the heatmap, the lighter the color means the higher density, it's obvious that there is positive linear relationship between tmin and tmax.
+
+From the density plot, it can be seen that there are local maximum in density around 20, 25, 50, and 75 mm. One can also notice that the heights of later 25, 50, 75 peaks has decreased over each the years -- the lighter the color, the lower the peak. This might indicate the result of climate change resulting in less snowfall.
