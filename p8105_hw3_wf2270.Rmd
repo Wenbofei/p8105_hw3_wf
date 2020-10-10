@@ -102,7 +102,7 @@ head(accel_data)
 
 Our final dataset includes `r nrow(accel_data)` observations with `r ncol(accel_data)` variables. Each observation has a "week" variable indicating which week, a unique"day_id" variable for each specific day, a "day" variable indicating the day of the week, a "minute_of_day" variable indicating which minute of the day is the record about, a "activity_court" recoding the activity counts for the minute, and a "weekend" indicating whether it's a weekend or a weekday.
 
-aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+Let's see a table showing daily total activity.
 
 ```{r P2Q2}
 accel_data %>%
@@ -110,18 +110,100 @@ accel_data %>%
   summarize(total_activity = sum(activity_count)) %>%
   knitr::kable()
 ```
+
 I can't see any apparent increasing or decreasing trend from this table. Looks like except for 3 days, all the other days have same order of magnitude of total activity count with fluctuation. We may need further analysis and visulization to find systematic trend.
 
-Describe in words any patterns or conclusions you can make based on this graph.
+Let's see a plot on activity over the course of the day, while each line represents a day and each color represent a specific day in a week.
 ```{r P2Q3}
 accel_data %>%
   group_by(day_id) %>%
   ggplot(aes(x = minute_of_day, y = activity_count, color = day)) + 
     geom_point(alpha = .5) + geom_line(alpha = .5) + 
     theme(legend.position = "bottom") +
-  labs(title = "activity over the course of the day")
+  labs(title = "Figure 1: activity over the course of the day")
 ```
 
 There activity over the course of the day varies for different time in a day and different day in a week. From around 350 minutes, the person maintain a moderate activity count, compared to 270 minutes in weekdays, which might mean that he gets up earlier in weekdays than weekend. The peak of activity on weekend are between 600-750 minutes, around 1000 minutes and some 1200 minutes, while the major peak for weekdays are around 1250 minutes, some around 500 minutes, this may indicate that the person do exercises in different time of a day.
 
+# Problem 3
+
+```{r P3data}
+data("ny_noaa")
+```
+
+These data were accessed from the NOAA National Climatic Data Center containing weather information for all  New York state weather stations from 1981 to 2010. It contains `r nrow(ny_noaa)` observations and `r ncol(ny_noaa)` variables, while "id" represents weather station ID, "date" represents date of observation, "prcp" represents precipitation (tenths of mm), "snow" represents snowfall (mm),"snwd" represents snow depth (mm), "tmax" maximum temperature (tenths of degrees C), "tmin" minimum temperature (tenths of degrees C). Each weather station may collect only a subset of these variables, and therefore the resulting dataset contains extensive missing data. Of all observations, 52.9% contain at least one missing value. In addition, 2.8% have missing values for all five key variables, and for this proportion, we nearly get nothing from this data.
+
+
+```{r P3_cleaning}
+noaa_data <- ny_noaa %>% 
+  janitor::clean_names() %>% 
+  separate(date, c("year", "month", "day"), sep = "-") %>% 
+  mutate(tmax = as.double(tmax) / 10, 
+         tmin = as.double(tmin) / 10, 
+         prcp = prcp / 10,
+         month = month.name[as.integer(month)], 
+         year = as.integer(year))
+
+quantile(pull(noaa_data, snow), na.rm = T)
+sum(pull(noaa_data, snow)<0, na.rm = T)
+```
+
+From the quantile, we can see that at least over 50% of snowfall data are 0, so 0 is the most commonly observed values. This is reasonable as we know that NY usually have snow in winter season while no snow in other 3 seasons. However, there's a negative snowfall, which might be a mistake.
+
+Let's see a two-panel plot showing the average max temperature in January and in July in each station across years.  Each point represents average tmax over the month in the year in specific station.
+
+```{r P3_plot1}
+noaa_data %>% 
+  filter(month %in% c("January", "July")) %>% 
+  group_by(year, month, id) %>% 
+  summarize(avg_temp = mean(tmax, na.rm = TRUE)) %>% 
+  drop_na() %>%
+  ggplot(aes(x = year, y = avg_temp)) + 
+  geom_point(alpha = 0.3) + 
+  geom_smooth(se = F) +
+  facet_grid(~ month) + 
+  labs(title = "Figure 2: Average maximum temperature (°C) in January and July, 1981-2010", 
+       x = "Year", 
+       y = "Average Max Daily Temperature (°C)") 
+```
+
+Is there any observable / interpretable structure? Any outliers?
+There's an continuous increase for the average max temperature in January, and it tends to center around zero degrees while the temperature for July varies around 27 degrees. In addition, the average maximum temperature for January appears to have more variation compared to that of July. Looks like there is one station has much lower average tmax(10 degress than the min of all the other station, and nearly 15 degrees from the center) in July 1988, we need to further check the data and other information to determine whether it's an outlier.
+
+Let's see a two-panel plot showing 
+(i) tmax vs tmin for the full dataset. For this plot, since there are too many data points, we use a heatmap.
+(ii) the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
+```{r P3Q3}
+library(plotly)
+temp_hex <- noaa_data %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+    geom_hex() + 
+    theme(legend.position = "bottom",
+          legend.key.height = unit(0.1, "in"),
+          legend.key.width = unit(0.5, "in"),
+          plot.title = element_text(size = 7)) +
+    labs(title = "Hexagon density plot of daily minimum and maximum temperature (°C)",
+         x = "Minimum Temperature (°C)", 
+         y = "Maximum Temperature (°C)") 
+
+  
+snow_density <- noaa_data %>%
+  filter(snow > 0 & snow < 100) %>%
+  mutate(year = as.factor(year)) %>%
+  ggplot(aes(x = snow, color = year)) +
+  geom_density(alpha = 0.01) +
+  labs(title = "Density plot of snowfall (mm), 1981-2010",
+         x = "Snowfall (mm)", 
+         y = "Density") + 
+  theme(legend.position = "bottom", 
+          legend.direction = "horizontal", 
+          legend.key.size = unit(0.1, "in"), 
+          legend.text = element_text(size = 6),
+          plot.title = element_text(size = 7))
+
+temp_snow_plot <- temp_hex + snow_density 
+
+wrap_elements(snow_temp_plot) + ggtitle("Figure 5: Density and hexagon plots")
+```
 
