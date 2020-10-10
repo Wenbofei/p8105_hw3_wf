@@ -7,6 +7,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(readxl)
 library(p8105.datasets)
 knitr::opts_chunk$set(
 	fig.width = 6, 
@@ -53,6 +54,7 @@ instacart %>%
 	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
   labs( y = "number of items ordered")
 ```
+
 Let's see a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”.
 
 ```{r P1Q3}
@@ -79,4 +81,23 @@ instacart %>%
 	)
 ```
 
+#Problem 2
+```{r P2_load_data, message=FALSE}
+accel_data = 
+  read_csv("./data/accel_data.csv") %>%
+  janitor::clean_names() %>%
+  pivot_longer(
+    activity_1:activity_1440,
+    names_to = "minute_of_day",
+    names_prefix = "activity_",
+    values_to = "activity_count" ) %>%
+    mutate( weekend = ifelse(day %in% c("Saturday","Sunday"), 1, 0),
+            day = forcats::fct_relevel(day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate_at(vars(week:day_id), as.factor) %>%
+  mutate_at("minute_of_day", as.integer) %>%
+  mutate_at("weekend", as.logical) 
+  
+head(accel_data)
+```
 
+Our final dataset includes `r nrow(accel_data)` observations with `r ncol(accel_data)` variables. Each observation has a "week" variable indicating which week, a unique"day_id" variable for each specific day, a "day" variable indicating the day of the week, a "minute_of_day" variable indicating which minute of the day is the record about, a "activity_court" recoding the activity counts for the minute, and a "weekend" indicating whether it's a weekend or a weekday.
